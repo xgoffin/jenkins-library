@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"os"
 	"path/filepath"
 	"strings"
 
@@ -566,7 +565,7 @@ func ConvertFprToSarif(sys System, project *models.Project, projectVersion *mode
 
 	tmpFolder, err := ioutil.TempDir(".", "temp-")
 	log.Entry().Debug("Making temp folder.")
-	defer os.RemoveAll(tmpFolder)
+	//defer os.RemoveAll(tmpFolder)
 	if err != nil {
 		log.Entry().WithError(err).WithField("path", tmpFolder).Debug("Creating temp directory failed")
 		return sarif, err
