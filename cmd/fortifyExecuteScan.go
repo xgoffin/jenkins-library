@@ -76,7 +76,7 @@ const checkString = "<---CHECK FORTIFY---"
 const classpathFileName = "fortify-execute-scan-cp.txt"
 
 func fortifyExecuteScan(config fortifyExecuteScanOptions, telemetryData *telemetry.CustomData, influx *fortifyExecuteScanInflux) {
-	auditStatus := map[string]string{}
+	/*auditStatus := map[string]string{}
 	sys := fortify.NewSystemInstance(config.ServerURL, config.APIEndpoint, config.AuthToken, time.Minute*15)
 	utils := newFortifyUtilsBundle()
 
@@ -88,7 +88,21 @@ func fortifyExecuteScan(config fortifyExecuteScanOptions, telemetryData *telemet
 	}
 	influx.step_data.fields.fortify = true
 	// make sure that no specific error category is set in success case
-	log.SetErrorCategory(log.ErrorUndefined)
+	log.SetErrorCategory(log.ErrorUndefined)*/
+	resultFilePath := fmt.Sprintf("%vtarget/result.fpr", config.ModulePath)
+	log.Entry().Info("Calling conversion to SARIF function.")
+	sys := fortify.NewSystemInstance(config.ServerURL, config.APIEndpoint, config.AuthToken, time.Minute*15)
+	var reports []piperutils.Path
+	sarif, err := fortify.ConvertFprToSarif(sys, nil, nil, resultFilePath)
+	if err != nil {
+		log.Entry().WithError(err).Fatal("failed to generate SARIF")
+	}
+	paths, err := fortify.WriteSarif(sarif)
+	if err != nil {
+		log.Entry().WithError(err).Fatal("failed to write sarif")
+	}
+	reports = append(reports, paths...)
+	piperutils.PersistReportsAndLinks("fortifyExecuteScan", config.ModulePath, reports, nil)
 }
 
 func determineArtifact(config fortifyExecuteScanOptions, utils fortifyUtils) (versioning.Artifact, error) {
