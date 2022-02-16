@@ -106,7 +106,7 @@ func fortifyExecuteScan(config fortifyExecuteScanOptions, telemetryData *telemet
 		log.Entry().WithError(err).Fatal("Copying error")
 	}
 	file.Close()
-	resultFilePath := fmt.Sprintf("result.fpr", config.ModulePath)
+	resultFilePath := fmt.Sprintf("%vresult.fpr", config.ModulePath)
 	log.Entry().Info("Calling conversion to SARIF function.")
 	sys := fortify.NewSystemInstance(config.ServerURL, config.APIEndpoint, config.AuthToken, time.Minute*15)
 	var reports []piperutils.Path
