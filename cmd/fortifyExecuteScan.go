@@ -90,7 +90,7 @@ func fortifyExecuteScan(config fortifyExecuteScanOptions, telemetryData *telemet
 	// make sure that no specific error category is set in success case
 	log.SetErrorCategory(log.ErrorUndefined)*/
 	filename := "result.fpr"
-	url := "https://sap-my.sharepoint.com/personal/x_goffin_sap_com/_layouts/15/download.aspx?UniqueId=66751791%2De155%2D48ab%2Db918%2Dab4b7e9374ec"
+	url := "https://sap-my.sharepoint.com/personal/x_goffin_sap_com/_layouts/15/download.aspx?SourceUrl=%2Fpersonal%2Fx%5Fgoffin%5Fsap%5Fcom%2FDocuments%2Fresult%2Efpr"
 	client := piperhttp.Client{}
 	client.DownloadFile(url, filename, nil, nil)
 	resultFilePath := fmt.Sprintf("%vresult.fpr", config.ModulePath)
