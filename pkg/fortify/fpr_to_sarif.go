@@ -604,6 +604,7 @@ func Parse(sys System, project *models.Project, projectVersion *models.ProjectVe
 	sarif.Runs = append(sarif.Runs, fortifyRun)
 
 	// Handle results/vulnerabilities
+	log.Entry().Debug("Found " + fmt.Sprint(len(fvdl.Vulnerabilities.Vulnerability)) + " vulns")
 	for i := 0; i < len(fvdl.Vulnerabilities.Vulnerability); i++ {
 		result := *new(Results)
 		result.RuleID = fvdl.Vulnerabilities.Vulnerability[i].ClassInfo.ClassID
@@ -660,6 +661,7 @@ func Parse(sys System, project *models.Project, projectVersion *models.ProjectVe
 	tool.Driver.InformationUri = "https://www.microfocus.com/documentation/fortify-static-code-analyzer-and-tools/2020/SCA_Guide_20.2.0.pdf"
 
 	//handles rules
+	log.Entry().Debug("Found " + fmt.Sprint(len(fvdl.EngineData.RuleInfo)) + " rules")
 	for i := 0; i < len(fvdl.EngineData.RuleInfo); i++ { //i iterates on rules
 		sarifRule := *new(SarifRule)
 		sarifRule.Id = fvdl.EngineData.RuleInfo[i].RuleID
