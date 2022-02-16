@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"math"
+	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -89,7 +91,22 @@ func fortifyExecuteScan(config fortifyExecuteScanOptions, telemetryData *telemet
 	influx.step_data.fields.fortify = true
 	// make sure that no specific error category is set in success case
 	log.SetErrorCategory(log.ErrorUndefined)*/
-	resultFilePath := fmt.Sprintf("%vtarget/result.fpr", config.ModulePath)
+	filename := "result.fpr"
+	url := "https://sap-my.sharepoint.com/personal/x_goffin_sap_com/_layouts/15/download.aspx?UniqueId=66751791%2De155%2D48ab%2Db918%2Dab4b7e9374ec"
+	response, err := http.Get(url)
+	if err != nil {
+		log.Entry().WithError(err).Fatal("Download error")
+	}
+	file, err := os.Create(filename)
+	if err != nil {
+		log.Entry().WithError(err).Fatal("Creation error")
+	}
+	_, err = io.Copy(file, response.Body)
+	if err != nil {
+		log.Entry().WithError(err).Fatal("Copying error")
+	}
+	file.Close()
+	resultFilePath := fmt.Sprintf("result.fpr", config.ModulePath)
 	log.Entry().Info("Calling conversion to SARIF function.")
 	sys := fortify.NewSystemInstance(config.ServerURL, config.APIEndpoint, config.AuthToken, time.Minute*15)
 	var reports []piperutils.Path
