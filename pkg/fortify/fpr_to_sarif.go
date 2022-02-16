@@ -577,7 +577,7 @@ func ConvertFprToSarif(sys System, project *models.Project, projectVersion *mode
 		return sarif, err
 	}
 
-	log.Entry().Debug("IOUtil read file.")
+	log.Entry().Debug("IOUtil read file at: " + filepath.Join(tmpFolder, "audit.fvdl"))
 	data, err := ioutil.ReadFile(filepath.Join(tmpFolder, "audit.fvdl"))
 	if err != nil {
 		log.Entry().WithError(err).Debug("File reading failed")
