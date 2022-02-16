@@ -565,6 +565,7 @@ func ConvertFprToSarif(sys System, project *models.Project, projectVersion *mode
 	var sarif SARIF
 
 	tmpFolder, err := ioutil.TempDir(".", "temp-")
+	log.Entry().Debug("Making temp folder.")
 	defer os.RemoveAll(tmpFolder)
 	if err != nil {
 		log.Entry().WithError(err).WithField("path", tmpFolder).Debug("Creating temp directory failed")
@@ -581,6 +582,7 @@ func ConvertFprToSarif(sys System, project *models.Project, projectVersion *mode
 		return sarif, err
 	}
 
+	log.Entry().Debug("Calling Parse.")
 	return Parse(sys, project, projectVersion, data)
 }
 
