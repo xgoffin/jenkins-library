@@ -574,11 +574,14 @@ func ConvertFprToSarif(sys System, project *models.Project, projectVersion *mode
 
 	_, err = FileUtils.Unzip(resultFilePath, tmpFolder)
 	if err != nil {
+		log.Entry().WithError(err).Debug("Unzipping failed")
 		return sarif, err
 	}
 
+	log.Entry().Debug("IOUtil read file.")
 	data, err := ioutil.ReadFile(filepath.Join(tmpFolder, "audit.fvdl"))
 	if err != nil {
+		log.Entry().WithError(err).Debug("File reading failed")
 		return sarif, err
 	}
 
