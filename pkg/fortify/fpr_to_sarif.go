@@ -583,6 +583,11 @@ func ConvertFprToSarif(sys System, project *models.Project, projectVersion *mode
 		log.Entry().WithError(err).Debug("File reading failed")
 		return sarif, err
 	}
+	if len(data) == 0 {
+		log.Entry().Error("Error reading audit file at " + filepath.Join(tmpFolder, "audit.fvdl") + ". This might be that the file is missing, corrupted, or too large. Aborting procedure.")
+		err := errors.New("cannot read audit file")
+		return sarif, err
+	}
 
 	log.Entry().Debug("Calling Parse.")
 	return Parse(sys, project, projectVersion, data)
