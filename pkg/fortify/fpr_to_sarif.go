@@ -606,7 +606,7 @@ func Parse(sys System, project *models.Project, projectVersion *models.ProjectVe
 	var fvdl FVDL
 	decoder.Decode(&fvdl)
 	json, _ := json.MarshalIndent(fvdl, "", " ")
-	log.Entry().Debug(json)
+	log.Entry().Debug(string(json))
 
 	//Now, we handle the sarif
 	var sarif SARIF
