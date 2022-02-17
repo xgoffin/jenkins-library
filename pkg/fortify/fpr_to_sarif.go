@@ -591,12 +591,15 @@ func ConvertFprToSarif(sys System, project *models.Project, projectVersion *mode
 	}
 
 	log.Entry().Debug("Calling Parse.")
-	return Parse(sys, project, projectVersion, data)
+	sarif, err = Parse(sys, project, projectVersion, data)
+	return sarif, err
 }
 
 func Parse(sys System, project *models.Project, projectVersion *models.ProjectVersion, data []byte) (SARIF, error) {
 	//To read XML data, Unmarshal or Decode can be used, here we use Decode to work on the stream
+	log.Entry().Debug("[PARSE]File size: " + fmt.Sprintf("%v", len(data)))
 	reader := bytes.NewReader(data)
+	log.Entry().Debug("[PARSE]Reader size: " + fmt.Sprintf("%v", reader.Size()))
 	decoder := xml.NewDecoder(reader)
 
 	var fvdl FVDL
