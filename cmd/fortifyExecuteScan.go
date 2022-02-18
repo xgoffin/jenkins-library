@@ -91,7 +91,8 @@ func fortifyExecuteScan(config fortifyExecuteScanOptions, telemetryData *telemet
 	// make sure that no specific error category is set in success case
 	log.SetErrorCategory(log.ErrorUndefined)*/
 	filename := "result.fpr"
-	url := "https://sap-my.sharepoint.com/:u:/p/x_goffin/EZEXdWZV4atIuRirS36TdOwBh69lCn2lDKD8l6qUCrVqgA?download=1"
+	//url := "https://sap-my.sharepoint.com/:u:/p/x_goffin/EZEXdWZV4atIuRirS36TdOwBh69lCn2lDKD8l6qUCrVqgA?download=1"
+	url := "https://sap-my.sharepoint.com/:u:/p/x_goffin/EUsG5uqgklJPlQYpAobZWdEBCDzFEGGRZ7UBx8gBefyDOg?download=1"
 	jar, _ := cookiejar.New(nil)
 	client := piperhttp.Client{}
 	client.SetOptions(piperhttp.ClientOptions{CookieJar: jar})
