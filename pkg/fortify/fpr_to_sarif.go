@@ -1,6 +1,7 @@
 package fortify
 
 import (
+	"encoding/json"
 	"encoding/xml"
 	"errors"
 	"fmt"
@@ -604,13 +605,13 @@ func Parse(sys System, project *models.Project, projectVersion *models.ProjectVe
 
 	var fvdl FVDL
 	decoder.Decode(&fvdl)*/
-	//json, _ := json.MarshalIndent(fvdl, "", " ")
-	//log.Entry().Debug(string(json))
 	var fvdl FVDL
 	err := xml.Unmarshal(data, &fvdl)
 	if err != nil {
 		return SARIF{}, err
 	}
+	json, _ := json.MarshalIndent(fvdl, "", " ")
+	log.Entry().Debug(string(json))
 
 	//Now, we handle the sarif
 	var sarif SARIF
