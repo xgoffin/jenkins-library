@@ -764,11 +764,15 @@ func Parse(sys System, project *models.Project, projectVersion *models.ProjectVe
 }
 
 func (RuleProp *SarifProperties) IntegrateAuditData(issueInstanceID string, sys System, project *models.Project, projectVersion *models.ProjectVersion) error {
+	if project == nil || projectVersion == nil {
+		err := errors.New("project or projectVersion is undefined: lookup aborted for " + issueInstanceID)
+		return err
+	}
 	data, err := sys.GetIssueDetails(projectVersion.ID, issueInstanceID)
 	if err != nil {
 		return err
 	}
-	//log.Entry().Debug("Looking up audit state of " + issueInstanceID) // This crashes the program if issueInstanceID isn't defined...
+	log.Entry().Debug("Looking up audit state of " + issueInstanceID)
 	if len(data) != 1 { //issueInstanceID is supposedly unique so len(data) = 1
 		log.Entry().Error("not exactly 1 issue found, found " + fmt.Sprint(len(data)))
 		return errors.New("not exactly 1 issue found, found " + fmt.Sprint(len(data)))
