@@ -2,7 +2,6 @@ package fortify
 
 import (
 	"bytes"
-	"encoding/json"
 	"encoding/xml"
 	"errors"
 	"fmt"
@@ -606,8 +605,8 @@ func Parse(sys System, project *models.Project, projectVersion *models.ProjectVe
 
 	var fvdl FVDL
 	decoder.Decode(&fvdl)
-	json, _ := json.MarshalIndent(fvdl, "", " ")
-	log.Entry().Debug(string(json))
+	//json, _ := json.MarshalIndent(fvdl, "", " ")
+	//log.Entry().Debug(string(json))
 
 	//Now, we handle the sarif
 	var sarif SARIF
@@ -766,10 +765,10 @@ func Parse(sys System, project *models.Project, projectVersion *models.ProjectVe
 
 func (RuleProp *SarifProperties) IntegrateAuditData(issueInstanceID string, sys System, project *models.Project, projectVersion *models.ProjectVersion) error {
 	data, err := sys.GetIssueDetails(projectVersion.ID, issueInstanceID)
-	log.Entry().Debug("Looking up audit state of " + issueInstanceID)
 	if err != nil {
 		return err
 	}
+	//log.Entry().Debug("Looking up audit state of " + issueInstanceID) // This crashes the program if issueInstanceID isn't defined...
 	if len(data) != 1 { //issueInstanceID is supposedly unique so len(data) = 1
 		log.Entry().Error("not exactly 1 issue found, found " + fmt.Sprint(len(data)))
 		return errors.New("not exactly 1 issue found, found " + fmt.Sprint(len(data)))
