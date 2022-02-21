@@ -91,10 +91,10 @@ func fortifyExecuteScan(config fortifyExecuteScanOptions, telemetryData *telemet
 	// make sure that no specific error category is set in success case
 	log.SetErrorCategory(log.ErrorUndefined)*/
 	filename := "result.fpr"
-	//url := "https://sap-my.sharepoint.com/:u:/p/x_goffin/EZEXdWZV4atIuRirS36TdOwBh69lCn2lDKD8l6qUCrVqgA?download=1"
-	//url := "https://sap-my.sharepoint.com/:u:/p/x_goffin/EUsG5uqgklJPlQYpAobZWdEBCDzFEGGRZ7UBx8gBefyDOg?download=1" //200MB
+	//url := "https://sap-my.sharepoint.com/:u:/p/x_goffin/EZEXdWZV4atIuRirS36TdOwBh69lCn2lDKD8l6qUCrVqgA?download=1" //No longer valid
+	url := "https://sap-my.sharepoint.com/:u:/p/x_goffin/EUsG5uqgklJPlQYpAobZWdEBCDzFEGGRZ7UBx8gBefyDOg?download=1" //200MB
 	//url := "https://sap-my.sharepoint.com/:u:/p/x_goffin/EV3AiDjFzm9InNMDpZfoqj4BK2SrcSCboEA56l0WMW9b8g?download=1" // 25.6MB
-	url := "https://sap-my.sharepoint.com/:u:/p/x_goffin/EfU3TmH5jIdBmshpLexJpcQBu288XiU_1P32luNU0Osupw?download=1" // 58.5MB
+	//url := "https://sap-my.sharepoint.com/:u:/p/x_goffin/EfU3TmH5jIdBmshpLexJpcQBu288XiU_1P32luNU0Osupw?download=1" // 58.5MB
 	jar, _ := cookiejar.New(nil)
 	client := piperhttp.Client{}
 	client.SetOptions(piperhttp.ClientOptions{CookieJar: jar})
