@@ -1,7 +1,7 @@
 package fortify
 
 import (
-	"encoding/json"
+	"bytes"
 	"encoding/xml"
 	"errors"
 	"fmt"
@@ -598,20 +598,23 @@ func ConvertFprToSarif(sys System, project *models.Project, projectVersion *mode
 
 func Parse(sys System, project *models.Project, projectVersion *models.ProjectVersion, data []byte) (SARIF, error) {
 	//To read XML data, Unmarshal or Decode can be used, here we use Decode to work on the stream
-	/*log.Entry().Debug("[PARSE]File size: " + fmt.Sprintf("%v", len(data)))
+	log.Entry().Debug("[PARSE]File size: " + fmt.Sprintf("%v", len(data)))
 	reader := bytes.NewReader(data)
 	log.Entry().Debug("[PARSE]Reader size: " + fmt.Sprintf("%v", reader.Size()))
 	decoder := xml.NewDecoder(reader)
 
 	var fvdl FVDL
-	decoder.Decode(&fvdl)*/
-	var fvdl FVDL
+	err := decoder.Decode(&fvdl)
+	if err != nil {
+		return SARIF{}, err
+	}
+	/*var fvdl FVDL
 	err := xml.Unmarshal(data, &fvdl)
 	if err != nil {
 		return SARIF{}, err
 	}
 	json, _ := json.MarshalIndent(fvdl, "", " ")
-	log.Entry().Debug(string(json))
+	log.Entry().Debug(string(json))*/
 
 	//Now, we handle the sarif
 	var sarif SARIF
