@@ -58,10 +58,11 @@ type LOC struct {
 type Build struct {
 	XMLName        xml.Name `xml:"Build"`
 	Project        string   `xml:"Project"`
+	Version        string   `xml:"Version"`
 	Label          string   `xml:"Label"`
 	BuildID        string   `xml:"BuildID"`
 	NumberFiles    int      `xml:"NumberFiles"`
-	Locs           []LOC    `xml:",any"`
+	Locs           []LOC    `xml:"LOC"`
 	JavaClassPath  string   `xml:"JavaClasspath"`
 	SourceBasePath string   `xml:"SourceBasePath"`
 	SourceFiles    []File   `xml:"SourceFiles>File"`
