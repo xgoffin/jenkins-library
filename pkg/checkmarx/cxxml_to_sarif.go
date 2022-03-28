@@ -7,9 +7,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/SAP/jenkins-library/pkg/format"
 	"github.com/SAP/jenkins-library/pkg/log"
 	"github.com/pkg/errors"
+	"github.com/xgoffin/jenkins-library/pkg/format"
 )
 
 // CxXMLResults : This struct encapsulates everyting in the Cx XML document
