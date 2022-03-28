@@ -1,4 +1,4 @@
-module github.com/SAP/jenkins-library
+module github.com/xgoffin/jenkins-library
 
 go 1.17
 
