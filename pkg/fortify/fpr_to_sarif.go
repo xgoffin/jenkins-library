@@ -504,7 +504,7 @@ func (a Action) isEmpty() bool {
 }
 
 // ConvertFprToSarif converts the FPR file contents into SARIF format
-func ConvertFprToSarif(sys System, project *models.Project, projectVersion *models.ProjectVersion, resultFilePath string) (format.SARIF, error) {
+func ConvertFprToSarif(sys System, project *models.Project, projectVersion *models.ProjectVersion, resultFilePath string, filterSet *models.FilterSet) (format.SARIF, error) {
 	log.Entry().Debug("Extracting FPR.")
 	var sarif format.SARIF
 	tmpFolder, err := ioutil.TempDir(".", "temp-")
@@ -530,11 +530,11 @@ func ConvertFprToSarif(sys System, project *models.Project, projectVersion *mode
 	}
 
 	log.Entry().Debug("Calling Parse.")
-	return Parse(sys, project, projectVersion, data)
+	return Parse(sys, project, projectVersion, data, filterSet)
 }
 
 // Parse parses the FPR file
-func Parse(sys System, project *models.Project, projectVersion *models.ProjectVersion, data []byte) (format.SARIF, error) {
+func Parse(sys System, project *models.Project, projectVersion *models.ProjectVersion, data []byte, filterSet *models.FilterSet) (format.SARIF, error) {
 	//To read XML data, Unmarshal or Decode can be used, here we use Decode to work on the stream
 	reader := bytes.NewReader(data)
 	decoder := xml.NewDecoder(reader)
@@ -547,7 +547,7 @@ func Parse(sys System, project *models.Project, projectVersion *models.ProjectVe
 
 	//Now, we handle the sarif
 	var sarif format.SARIF
-	sarif.Schema = "https://docs.oasis-open.org/sarif/sarif/v2.1.0/cos01/schemas/sarif-schema-2.1.0.json"
+	sarif.Schema = "https://docs.oasis-open.org/sarif/sarif/v2.1.0/cos02/schemas/sarif-schema-2.1.0.json"
 	sarif.Version = "2.1.0"
 	var fortifyRun format.Runs
 	fortifyRun.ColumnKind = "utf16CodeUnits"
@@ -568,7 +568,9 @@ func Parse(sys System, project *models.Project, projectVersion *models.ProjectVe
 				for l := 0; l < len(fvdl.Vulnerabilities.Vulnerability[i].AnalysisInfo.ReplacementDefinitions.Def); l++ {
 					rawMessage = strings.ReplaceAll(rawMessage, "Replace key=\""+fvdl.Vulnerabilities.Vulnerability[i].AnalysisInfo.ReplacementDefinitions.Def[l].DefKey+"\"", fvdl.Vulnerabilities.Vulnerability[i].AnalysisInfo.ReplacementDefinitions.Def[l].DefValue)
 				}
-				result.Message = format.Message{rawMessage}
+				msg := new(format.Message)
+				msg.Text = rawMessage
+				result.Message = msg
 				break
 			}
 		}
@@ -606,7 +608,9 @@ func Parse(sys System, project *models.Project, projectVersion *models.ProjectVe
 						if fvdl.Snippets[j].SnippetId == targetSnippetId {
 							threadFlowLocation.Location.PhysicalLocation.ContextRegion.StartLine = fvdl.Snippets[j].StartLine
 							threadFlowLocation.Location.PhysicalLocation.ContextRegion.EndLine = fvdl.Snippets[j].EndLine
-							threadFlowLocation.Location.PhysicalLocation.ContextRegion.Snippet.Text = fvdl.Snippets[j].Text
+							snippetSarif := new(format.SnippetSarif)
+							snippetSarif.Text = fvdl.Snippets[j].Text
+							threadFlowLocation.Location.PhysicalLocation.ContextRegion.Snippet = snippetSarif
 							break
 						}
 					}
@@ -652,13 +656,17 @@ func Parse(sys System, project *models.Project, projectVersion *models.ProjectVe
 								break
 							}
 						}
+						snippetSarif := new(format.SnippetSarif)
 						if snippetText != "" {
-							threadFlowLocation.Location.PhysicalLocation.Region.Snippet.Text = snippetText
+							snippetSarif.Text = snippetText
 						} else {
-							threadFlowLocation.Location.PhysicalLocation.Region.Snippet.Text = threadFlowLocation.Location.PhysicalLocation.ContextRegion.Snippet.Text
+							snippetSarif.Text = threadFlowLocation.Location.PhysicalLocation.ContextRegion.Snippet.Text
 						}
+						threadFlowLocation.Location.PhysicalLocation.Region.Snippet = snippetSarif
 					} else {
-						threadFlowLocation.Location.PhysicalLocation.Region.Snippet.Text = threadFlowLocation.Location.PhysicalLocation.ContextRegion.Snippet.Text
+						snippetSarif := new(format.SnippetSarif)
+						snippetSarif.Text = threadFlowLocation.Location.PhysicalLocation.ContextRegion.Snippet.Text
+						threadFlowLocation.Location.PhysicalLocation.Region.Snippet = snippetSarif
 					}
 					location = *threadFlowLocation.Location
 					//set Kinds
@@ -689,7 +697,7 @@ func Parse(sys System, project *models.Project, projectVersion *models.ProjectVe
 		result.RelatedLocations = append(result.RelatedLocations, relatedLocation)
 
 		//handle properties
-		prop := *new(format.SarifProperties)
+		prop := new(format.SarifProperties)
 		prop.InstanceSeverity = fvdl.Vulnerabilities.Vulnerability[i].InstanceInfo.InstanceSeverity
 		prop.Confidence = fvdl.Vulnerabilities.Vulnerability[i].InstanceInfo.Confidence
 		prop.InstanceID = fvdl.Vulnerabilities.Vulnerability[i].InstanceInfo.InstanceID
@@ -702,7 +710,7 @@ func Parse(sys System, project *models.Project, projectVersion *models.ProjectVe
 			prop.ToolState = "Not an Issue"
 			prop.ToolStateIndex = 1
 		} else if sys != nil {
-			if err := integrateAuditData(&prop, fvdl.Vulnerabilities.Vulnerability[i].InstanceInfo.InstanceID, sys, project, projectVersion); err != nil {
+			if err := integrateAuditData(prop, fvdl.Vulnerabilities.Vulnerability[i].InstanceInfo.InstanceID, sys, project, projectVersion, filterSet); err != nil {
 				log.Entry().Debug(err)
 				prop.Audited = false
 				prop.ToolState = "Unknown"
@@ -743,7 +751,9 @@ func Parse(sys System, project *models.Project, projectVersion *models.ProjectVe
 					nameArray = append(nameArray, fvdl.Vulnerabilities.Vulnerability[j].ClassInfo.Subtype)
 				}
 				sarifRule.Name = strings.Join(nameArray, "/")
-				sarifRule.DefaultConfiguration.Properties.DefaultSeverity = fvdl.Vulnerabilities.Vulnerability[j].ClassInfo.DefaultSeverity
+				defaultConfig := new(format.DefaultConfiguration)
+				defaultConfig.Properties.DefaultSeverity = fvdl.Vulnerabilities.Vulnerability[j].ClassInfo.DefaultSeverity
+				sarifRule.DefaultConfiguration = defaultConfig
 				break
 			}
 		}
@@ -767,8 +777,12 @@ func Parse(sys System, project *models.Project, projectVersion *models.ProjectVe
 						if fvdl.Description[j].CustomDescription.RuleID != "" {
 							rawExplanation = rawExplanation + "\n;" + fvdl.Description[j].CustomDescription.Explanation.Text
 						}
-						sarifRule.ShortDescription.Text = rawAbstract
-						sarifRule.FullDescription.Text = rawExplanation
+						sd := new(format.Message)
+						sd.Text = rawAbstract
+						sarifRule.ShortDescription = sd
+						fd := new(format.Message)
+						fd.Text = rawExplanation
+						sarifRule.FullDescription = fd
 						break
 					}
 				}
@@ -776,12 +790,12 @@ func Parse(sys System, project *models.Project, projectVersion *models.ProjectVe
 			}
 		}
 		// Avoid empty descriptions to respect standard
-		if sarifRule.ShortDescription.Text == "" {
-			sarifRule.ShortDescription.Text = "None."
-		}
-		if sarifRule.FullDescription.Text == "" { // OR USE OMITEMPTY
-			sarifRule.FullDescription.Text = "None."
-		}
+		//if sarifRule.ShortDescription.Text == "" {
+		//	sarifRule.ShortDescription.Text = "None."
+		//}
+		//if sarifRule.FullDescription.Text == "" { // OR USE OMITEMPTY
+		//	sarifRule.FullDescription.Text = "None."
+		//}
 
 		//properties
 		//Prepare a CWE id object as an in-case
@@ -877,7 +891,9 @@ func Parse(sys System, project *models.Project, projectVersion *models.ProjectVe
 	sarif.Runs[0].Invocations = append(sarif.Runs[0].Invocations, invocation)
 
 	//handle originalUriBaseIds
-	sarif.Runs[0].OriginalUriBaseIds.SrcRoot.Uri = "file:///" + fvdl.Build.SourceBasePath + "/"
+	oubi := new(format.OriginalUriBaseIds)
+	oubi.SrcRoot.Uri = "file:///" + fvdl.Build.SourceBasePath + "/"
+	sarif.Runs[0].OriginalUriBaseIds = oubi
 
 	//handle artifacts
 	for i := 0; i < len(fvdl.Build.SourceFiles); i++ { //i iterates on source files
@@ -932,7 +948,9 @@ func Parse(sys System, project *models.Project, projectVersion *models.ProjectVe
 			if fvdl.Snippets[j].SnippetId == targetSnippetId {
 				loc.PhysicalLocation.ContextRegion.StartLine = fvdl.Snippets[j].StartLine
 				loc.PhysicalLocation.ContextRegion.EndLine = fvdl.Snippets[j].EndLine
-				loc.PhysicalLocation.ContextRegion.Snippet.Text = fvdl.Snippets[j].Text
+				snippetSarif := new(format.SnippetSarif)
+				snippetSarif.Text = fvdl.Snippets[j].Text
+				loc.PhysicalLocation.ContextRegion.Snippet = snippetSarif
 				break
 			}
 		}
@@ -966,18 +984,22 @@ func Parse(sys System, project *models.Project, projectVersion *models.ProjectVe
 		default:
 			snippetTarget = fvdl.UnifiedNodePool.Node[i].Action.ActionData
 		}
-		physLocationSnippetLines := strings.Split(loc.PhysicalLocation.ContextRegion.Snippet.Text, "\n")
-		snippetText := ""
-		for j := 0; j < len(physLocationSnippetLines); j++ {
-			if strings.Contains(physLocationSnippetLines[j], snippetTarget) {
-				snippetText = physLocationSnippetLines[j]
-				break
+		if loc.PhysicalLocation.ContextRegion.Snippet != nil {
+			physLocationSnippetLines := strings.Split(loc.PhysicalLocation.ContextRegion.Snippet.Text, "\n")
+			snippetText := ""
+			for j := 0; j < len(physLocationSnippetLines); j++ {
+				if strings.Contains(physLocationSnippetLines[j], snippetTarget) {
+					snippetText = physLocationSnippetLines[j]
+					break
+				}
 			}
-		}
-		if snippetText != "" {
-			loc.PhysicalLocation.Region.Snippet.Text = snippetText
-		} else {
-			loc.PhysicalLocation.Region.Snippet.Text = loc.PhysicalLocation.ContextRegion.Snippet.Text
+			snippetSarif := new(format.SnippetSarif)
+			if snippetText != "" {
+				snippetSarif.Text = snippetText
+			} else {
+				snippetSarif.Text = loc.PhysicalLocation.ContextRegion.Snippet.Text
+			}
+			loc.PhysicalLocation.Region.Snippet = snippetSarif
 		}
 		locations.Location = loc
 		locations.Kinds = append(locations.Kinds, "unknown")
@@ -993,7 +1015,7 @@ func Parse(sys System, project *models.Project, projectVersion *models.ProjectVe
 	taxonomy.Name = "CWE"
 	taxonomy.Organization = "MITRE"
 	taxonomy.ShortDescription.Text = "The MITRE Common Weakness Enumeration"
-	for key, _ := range cweIdsForTaxonomies {
+	for key := range cweIdsForTaxonomies {
 		taxa := *new(format.Taxa)
 		taxa.Id = key
 		taxonomy.Taxa = append(taxonomy.Taxa, taxa)
@@ -1003,7 +1025,7 @@ func Parse(sys System, project *models.Project, projectVersion *models.ProjectVe
 	return sarif, nil
 }
 
-func integrateAuditData(ruleProp *format.SarifProperties, issueInstanceID string, sys System, project *models.Project, projectVersion *models.ProjectVersion) error {
+func integrateAuditData(ruleProp *format.SarifProperties, issueInstanceID string, sys System, project *models.Project, projectVersion *models.ProjectVersion, filterSet *models.FilterSet) error {
 	if sys == nil {
 		err := errors.New("no system instance, lookup impossible for " + issueInstanceID)
 		return err
@@ -1060,6 +1082,17 @@ func integrateAuditData(ruleProp *format.SarifProperties, issueInstanceID string
 			return err
 		}
 		ruleProp.ToolAuditMessage = *commentData[0].Comment
+	}
+	if filterSet != nil {
+		for i := 0; i < len(filterSet.Folders); i++ {
+			if filterSet.Folders[i].GUID == *data[0].FolderGUID {
+				ruleProp.FortifyCategory = filterSet.Folders[i].Name
+				break
+			}
+		}
+	} else {
+		err := errors.New("no filter set defined, category will be missing from " + issueInstanceID)
+		return err
 	}
 	return nil
 }

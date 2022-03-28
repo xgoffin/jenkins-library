@@ -89,7 +89,7 @@ func runKanikoExecute(config *kanikoExecuteOptions, telemetryData *telemetry.Cus
 	log.Entry().Debugf("preparing build settings information...")
 	stepName := "kanikoExecute"
 	// ToDo: better testability required. So far retrieval of config is rather non deterministic
-	dockerImage, err := getDockerImageValue(stepName)
+	dockerImage, err := GetDockerImageValue(stepName)
 	if err != nil {
 		return fmt.Errorf("failed to retrieve dockerImage configuration: %w", err)
 	}
@@ -215,7 +215,7 @@ func runKaniko(dockerFilepath string, buildOptions []string, readDigest bool, ex
 		return fmt.Errorf("failed to get current working directory: %w", err)
 	}
 
-	kanikoOpts := []string{"--dockerfile", dockerFilepath, "--context", cwd, "--reproducible"}
+	kanikoOpts := []string{"--dockerfile", dockerFilepath, "--context", cwd}
 	kanikoOpts = append(kanikoOpts, buildOptions...)
 
 	tmpDir, err := fileUtils.TempDir("", "*-kanikoExecute")
