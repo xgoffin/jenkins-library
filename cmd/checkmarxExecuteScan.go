@@ -325,7 +325,7 @@ func verifyCxProjectCompliance(config checkmarxExecuteScanOptions, sys checkmarx
 	// generate sarif report
 	if config.ConvertToSarif {
 		log.Entry().Info("Calling conversion to SARIF function.")
-		sarif, err := checkmarx.ConvertCxxmlToSarif(sys, xmlReportName, scanID)
+		sarif, err := checkmarx.ConvertCxxmlToSarif(nil, xmlReportName, scanID)
 		if err != nil {
 			return fmt.Errorf("failed to generate SARIF")
 		}
